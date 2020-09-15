@@ -1,50 +1,122 @@
 package encryptdecrypt;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
-        //String [] input = args.split(" ");
-        //enc-dec with command line args
-        int x = 0;
-        String mode = "enc";
-        int key = 0;
-        String data = "";
 
+        String mode = "enc";
+
+        String alg = "shift";
+        InputData inputdata = new InputData();
+        if (args.length == 0) {
+            encryptAString();
+            return;
+        }
 
         for (int j = 0; j < args.length; j = j + 2) {
             if (args[j].equals("-mode")) {
+                //inputdata.setMode( args[j + 1]);
                 mode = args[j + 1];
             }
             if (args[j].equals("-key")) {
-                key = Integer.parseInt(args[j + 1]);
+                inputdata.setKey(Integer.parseInt(args[j + 1]));
             }
             if (args[j].equals("-data")) {
-                data = args[j + 1];
+                inputdata.setData(args[j + 1]);
+                //data = args[j + 1];
             }
+            if (args[j].equals("-in")) {
+                inputdata.setIn(args[j + 1]);
+                //in = args[j + 1];
+            }
+            if (args[j].equals("-out")) {
+                inputdata.setOut(args[j + 1]);
+                // out = args[j + 1];
+            }
+            if (args[j].equals("-alg")) {
+                alg = args[j + 1];
+            }
+
         }
 
-        if (mode.equals("enc")) {
-            enc(data, key);
-        } else if (mode.equals("dec")) {
-            dec(data, key);
+        switch (mode) {
+            case "enc":
+                ContextForEncDec contextForEnc = new ContextForEncDec(selectEncAlogorithem(inputdata, alg));
+                try {
+                    contextForEnc.enc(inputdata);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                break;
+            case "dec":
+                ContextForEncDec contextForDec = new ContextForEncDec(selectDecAlogorithem(inputdata, alg));
+                try {
+                    contextForDec.dec(inputdata);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                break;
+
+        }
+    }
+
+
+    public static DecInterface selectDecAlogorithem(InputData input, String alg) {
+        //if (mode.equals("enc") && data.equals(in) && !in.isEmpty()) {
+        if (input.getData().matches(".*(\\.txt)$") && alg.equals("unicode")) {
+            //System.out.println("calluing file enc");
+            //encFile(data, key, out);
+            return new UnicodeDecryption();
+            //
+        } else if (alg.equals("shift")) {
+            // enc(data, key);
+            return new ShiftDecryption();
+
+        }
+        return null;
+    }
+
+    public static EncInterface selectEncAlogorithem(InputData input, String alg) {
+        //if (mode.equals("enc") && data.equals(in) && !in.isEmpty()) {
+        if (input.getData().matches(".*(\\.txt)$") && alg.equals("unicode")) {
+            //System.out.println("calluing file enc");
+            //encFile(data, key, out);
+            return new UnicodeEncryption();
+            //
+        } else if (alg.equals("shift")) {
+            // enc(data, key);
+            return new ShiftEncryption();
+
         }
 
-        //enc or dec with specified key
-        //encDecWithAKey();
+        return null;
+    }
 
-        //encOfaTOzAround();
-        //encryptAString();
+
+    private static void decToFile(String out, int key) {
+        File file = new File(out);
+        StringBuilder sb = new StringBuilder();
+        try (Scanner scanner = new Scanner(file)) {
+            while (scanner.hasNext()) {
+                sb.append(scanner.nextLine());
+            }
+            dec(sb.toString(), key);
+        } catch (IOException e) {
+            System.out.println("ERROR");
+        }
     }
 
     private static void encDecWithAKey() {
         Scanner scanner = new Scanner(System.in);
-        String operation =  scanner.nextLine();
+        String operation = scanner.nextLine();
         String inputString = scanner.nextLine();
         int key = scanner.nextInt();
-        if(operation.equals("enc")){
+        if (operation.equals("enc")) {
             enc(inputString, key);
-        }else if(operation.equals("dec")){
+        } else if (operation.equals("dec")) {
             dec(inputString, key);
         }
     }
@@ -62,25 +134,8 @@ public class Main {
         }
     }
 
-    //encrypt by adding key
-    private static void encOfaTOzAround() {
-        Scanner scanner = new Scanner(System.in);
-        String inputString = scanner.nextLine();
-        int key = scanner.nextInt();
-        for (char c : inputString.toCharArray()) {
-            if (String.valueOf(c).matches("[a-z]")) {
-                // System.out.println("before "+(int)c);
-                c = (char) ((c + key) > 122 ? c + key - 26 : c + key);
-                //System.out.println("after "+c);
-                System.out.print(c);
-            } else {
-                //System.out.println("not char c "+(int)c);
-                System.out.print(c);
-            }
-        }
-    }
 
-//encrypt a string by changing a->z..z->a
+    //encrypt a string by changing a->z..z->a
     private static void encryptAString() {
         String input = "we found a treasure!";  //scanner.nextLine();
         StringBuffer sb = new StringBuffer();
